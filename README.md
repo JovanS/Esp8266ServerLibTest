@@ -7,3 +7,7 @@ Platformio proeject.
 This is a ESP8266 webserver that serving files from  SPIFFS. Server is placed in a Library.
 Also update server is included
 Some utilities are implemented as static classes. 
+
+If you try this code don't forget to upload SPIFFS to your board.
+
+
