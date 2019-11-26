@@ -28,39 +28,30 @@ class WebServer {
             
             WebServer() {  
                 server = new ESP8266WebServer(80);
+                MDNS.addService("http", "tcp", 80);  
                 WebServer::postSetup();   
-                server->begin();
-                MDNS.addService("http", "tcp", 80); 
-                MDNS.update();      
             }
 
             WebServer(int PORT) {  
                 server = new ESP8266WebServer(PORT);
+                MDNS.addService("http", "tcp", PORT);   
                 WebServer::postSetup();   
-                server->begin();
-                MDNS.addService("http", "tcp", PORT);  
-                MDNS.update();              
             }
 
             WebServer(char *USER, char *PASS){ 
                 server = new ESP8266WebServer(80); 
-                WebServer::postSetup(); 
-                server->begin();
                 auth=true;
                 Server_User=USER; Server_Pass=PASS; 
                 MDNS.addService("http", "tcp", 80); 
-                MDNS.update();
-
+                WebServer::postSetup();  
             }
 
             WebServer(char *USER, char *PASS, int PORT){ 
                 server = new ESP8266WebServer(PORT);
-                WebServer::postSetup(); 
-                server->begin();
-                auth=true;
-                Server_User=USER; Server_Pass=PASS;
                 MDNS.addService("http", "tcp", PORT); 
-                MDNS.update();
+                WebServer::postSetup();  
+                auth=true;
+                Server_User=USER; Server_Pass=PASS; 
             } 
 
             void runFirmwareUpdater(bool activate_updater) {
@@ -68,6 +59,8 @@ class WebServer {
             }
     private:
         void postSetup(){ 
+            server->begin();
+            MDNS.update();   
             SPIFFS.begin();   
             server->on("/test.html", std::bind(&WebServer::handletest, this));  
             server->on("/podaci.js", std::bind(&WebServer::handlePodaci, this));  
@@ -84,7 +77,7 @@ class WebServer {
             
         }
 
-        String getContentType(String filename) { // convert the file extension to the MIME type
+        String getContentType(String filename) {  
             if(filename.endsWith(".html")) return "text/html"; 
             else if(filename.endsWith(".css")) return "text/css";
             else if(filename.endsWith(".js"))  return "application/javascript";
@@ -98,20 +91,20 @@ class WebServer {
             return "text/plain"; 
             }
 
-        bool handleFileRead(String path) { // send the right file to the client (if it exists)
+        bool handleFileRead(String path) {  
             Serial.println("handleFileRead: " + path);
 
               if (path.endsWith("/")) path += "index.html";     
   
-            String contentType = getContentType(path);            // Get the MIME type
-                if (SPIFFS.exists(path)) {                            // If the file exists
-                File file = SPIFFS.open(path, "r");                 // Open it
-                size_t sent = server->streamFile(file, contentType); // And send it to the client
-                file.close();                                       // Then close the file again
+            String contentType = getContentType(path);             
+                if (SPIFFS.exists(path)) {                           
+                File file = SPIFFS.open(path, "r");                  
+                size_t sent = server->streamFile(file, contentType);  
+                file.close();                                        
                 return true;
             }
             Serial.println("\tFile Not Found");
-            return false;                                         // If the file doesn't exist, return false
+            return false;                                          
     }
 
         void handletest () {
