@@ -10,11 +10,11 @@
 #include <ESP8266WebServer.h> 
 #include <filesysremInfo.h>
 #include <WiFiConnect.h>
-#include <WiFiScaner.h>
+#include <WiFiScaner.h> 
 
 void wifiScan(); 
 void wifiConnect();
 void filesystemInfo();
 
-WebServer wserv; 
+WebServer wserv;  
 #endif

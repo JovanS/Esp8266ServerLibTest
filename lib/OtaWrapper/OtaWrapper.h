@@ -20,9 +20,7 @@ public:
         startOTA();
     } 
 
-    void startOTA() {
-         Serial.println("Ota starting...");
-         Serial.println("You hveave to be already connected on wifi netwerok"); 
+    void startOTA() { 
             
             ArduinoOTA.onStart([]() {
                 Serial.println("OTA Started");
@@ -44,13 +42,9 @@ public:
                   else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
                   else if (error == OTA_END_ERROR) Serial.println("End Failed");
                   });
-            ArduinoOTA.begin();
-            Serial.println("Waiting for OTA");
+            ArduinoOTA.begin(); 
     }
 
-    void print() {
-        Serial.println("OtaWrapper");
-    }   
 
     void  handle() {
             ArduinoOTA.handle();

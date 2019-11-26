@@ -11,9 +11,10 @@
 extern "C" {
 #include "user_interface.h"
 }
+#include <WiFiScaner.h>
 
 ESP8266HTTPUpdateServer httpUpdater;
-ESP8266WebServer *server = new ESP8266WebServer;
+ESP8266WebServer *server; 
 char *Server_Pass;
 char *Server_User;
 bool auth=false; 
@@ -25,8 +26,7 @@ class WebServer {
                 server->handleClient();
             }
             
-            WebServer() { 
-                delete server;
+            WebServer() {  
                 server = new ESP8266WebServer(80);
                 WebServer::postSetup();   
                 server->begin();
@@ -34,8 +34,7 @@ class WebServer {
                 MDNS.update();      
             }
 
-            WebServer(int PORT) { 
-                delete server;
+            WebServer(int PORT) {  
                 server = new ESP8266WebServer(PORT);
                 WebServer::postSetup();   
                 server->begin();
@@ -43,8 +42,7 @@ class WebServer {
                 MDNS.update();              
             }
 
-            WebServer(char *USER, char *PASS){
-                delete server;
+            WebServer(char *USER, char *PASS){ 
                 server = new ESP8266WebServer(80); 
                 WebServer::postSetup(); 
                 server->begin();
@@ -55,8 +53,7 @@ class WebServer {
 
             }
 
-            WebServer(char *USER, char *PASS, int PORT){
-                delete server;
+            WebServer(char *USER, char *PASS, int PORT){ 
                 server = new ESP8266WebServer(PORT);
                 WebServer::postSetup(); 
                 server->begin();
@@ -74,6 +71,8 @@ class WebServer {
             SPIFFS.begin();   
             server->on("/test.html", std::bind(&WebServer::handletest, this));  
             server->on("/podaci.js", std::bind(&WebServer::handlePodaci, this));  
+            server->on("/scan.html", std::bind(&WebServer::handleScan, this)); 
+            server->on("/podesi.html", std::bind(& WebServer::handlePodesi, this));
             server->onNotFound(std::bind(&WebServer::handleNotFound, this)); 
         }
 
@@ -86,26 +85,23 @@ class WebServer {
         }
 
         String getContentType(String filename) { // convert the file extension to the MIME type
-            if (filename.endsWith(".html")) return "text/html";
-            else if (filename.endsWith(".css")) return "text/css";
-            else if (filename.endsWith(".js")) return "application/javascript";
-            else if (filename.endsWith(".ico")) return "image/x-icon";
-            return "text/plain";
+            if(filename.endsWith(".html")) return "text/html"; 
+            else if(filename.endsWith(".css")) return "text/css";
+            else if(filename.endsWith(".js"))  return "application/javascript";
+            else if(filename.endsWith(".png")) return "image/png";
+            else if(filename.endsWith(".gif")) return "image/gif";
+            else if(filename.endsWith(".jpg")) return "image/jpeg";
+            else if(filename.endsWith(".ico")) return "image/x-icon";
+            else if(filename.endsWith(".xml")) return "text/xml";
+            else if(filename.endsWith(".pdf")) return "application/pdf";
+            else if(filename.endsWith(".zip")) return "application/zip";
+            return "text/plain"; 
             }
 
         bool handleFileRead(String path) { // send the right file to the client (if it exists)
             Serial.println("handleFileRead: " + path);
 
-              if (path.endsWith("/")) path += "index.html";         // If a folder is requested, send the index file
-   
-            // Creting file before servin it.
-            // if(path=="/podaci.js") {     
-            //     String data = "var milis="+String(millis(), DEC)+";"; 
-            //     Serial.println(data);
-            //     File file = SPIFFS.open("/podaci.js", "w");
-            //     file.println(data); 
-            //     file.close();
-            // }
+              if (path.endsWith("/")) path += "index.html";     
   
             String contentType = getContentType(path);            // Get the MIME type
                 if (SPIFFS.exists(path)) {                            // If the file exists
@@ -128,6 +124,34 @@ class WebServer {
             message = "var milis="+String(millis(), DEC)+";"; 
             Serial.println("\nPoslato kao podaci: "+message);
             server->send(200, "application/javascript", message );
+        }
+
+        void handleScan () { 
+            server->send(200, "text/plain", WiFiScaner::scanToString() );
+        }
+
+        void handlePodesi() { 
+            String message("URI:");
+                message += server->uri();
+                message += "\nMethod: ";
+                message += (server->method() == HTTP_GET)?"GET":"POST";
+                message += "\nArguments: ";
+                message += server->args();
+                message += "\n";
+                for (uint8_t i=0; i<server->args(); i++){
+                
+                message += " " + server->argName(i) + ": " + server->arg(i) + "\n";
+                }
+                server->send(200, "text/html", "OK ZA SAD :)" ); 
+
+            Serial.print("Received pareameters: ");
+            Serial.println(+server->args());
+            for(int i=0; i<server->args(); i++) {     
+            String tester(server->argName(i));
+            String argument(server->arg(i));
+            Serial.print(tester+" = ");
+            Serial.println(argument);
+            }
         }
 };
 
