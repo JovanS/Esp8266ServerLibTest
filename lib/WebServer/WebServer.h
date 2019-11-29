@@ -13,12 +13,7 @@ extern "C" {
 }
 #include <WiFiScaner.h>
 
-ESP8266HTTPUpdateServer httpUpdater;
-ESP8266WebServer *server; 
-char *Server_Pass;
-char *Server_User;
-bool auth=false; 
-String message;
+
 
 class WebServer { 
     public: 
@@ -26,7 +21,7 @@ class WebServer {
                 server->handleClient();
             }
             
-            WebServer() {  
+            WebServer() {    
                 server = new ESP8266WebServer(80);
                 MDNS.addService("http", "tcp", 80);  
                 WebServer::postSetup();   
@@ -58,6 +53,13 @@ class WebServer {
                 if(activate_updater) httpUpdater.setup(server); 
             }
     private:
+    
+    ESP8266HTTPUpdateServer httpUpdater;
+    ESP8266WebServer *server;  
+    char *Server_Pass;
+    char *Server_User;
+    bool auth=false; 
+    String message;
         void postSetup(){ 
             server->begin();
             MDNS.update();   
@@ -69,9 +71,9 @@ class WebServer {
             server->onNotFound(std::bind(&WebServer::handleNotFound, this)); 
         }
 
-        void handleNotFound() {
+        void handleNotFound() { 
             if(! WebServer::handleFileRead(server->uri())) {
-                Serial.println("404: Not Found");
+                Serial.println("404: Not Found"); 
                 server->send(404, "text/plain", "404: Not Found "+server->uri());
             }
             
@@ -88,6 +90,7 @@ class WebServer {
             else if(filename.endsWith(".xml")) return "text/xml";
             else if(filename.endsWith(".pdf")) return "application/pdf";
             else if(filename.endsWith(".zip")) return "application/zip";
+            else if(filename.endsWith(".json")) return "pplication/zip"; 
             return "text/plain"; 
             }
 
@@ -98,7 +101,8 @@ class WebServer {
   
             String contentType = getContentType(path);             
                 if (SPIFFS.exists(path)) {                           
-                File file = SPIFFS.open(path, "r");                  
+                File file = SPIFFS.open(path, "r"); 
+                server->sendHeader("Access-Control-Allow-Origin", "*");  // to support javascript fatc();
                 size_t sent = server->streamFile(file, contentType);  
                 file.close();                                        
                 return true;
